@@ -12,11 +12,13 @@ import (
 
 const Difficulty = 12
 
+// PoW
 type ProofOfWork struct {
 	Block  *Block
 	Target *big.Int
 }
 
+// Create new PoW
 func NewProofOfWork(b *Block) *ProofOfWork {
 	target := big.NewInt(1)
 	target.Lsh(target, uint(256-Difficulty))
@@ -35,6 +37,7 @@ func ToHex(num int64) []byte {
 	return buff.Bytes()
 }
 
+// Nonceの作成 (nonce: https://en.wikipedia.org/wiki/Cryptographic_nonce)
 func (pow *ProofOfWork) InitNonce(nonce int) []byte {
 	data := bytes.Join(
 		[][]byte{
@@ -72,6 +75,8 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 	return nonce, hash[:]
 }
 
+//検証
+// ブロックが生成したハッシュと関数が生成したハッシュを比較.
 func (pow *ProofOfWork) Validate() bool {
 	var intHash big.Int
 
