@@ -2,21 +2,22 @@ package blockchain
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/gob"
 	"log"
 )
 
-// Block is a single unit in the blockchain
+//Block is a single unit in the blockchain
 type Block struct {
-	Hash     []byte
-	Data     []byte
-	PrevHash []byte
-	Nonce    int
+	Hash         []byte
+	Transactions []*Transaction
+	PrevHash     []byte
+	Nonce        int
 }
 
-// CreateBlock creates a block and performs a proof of work algorithm
-func CreateBlock(data string, prevHash []byte) *Block {
-	block := &Block{[]byte{}, []byte(data), prevHash, 0}
+//新しいブロックを作成。チェーンには追加されない
+func CreateBlock(txs []*Transaction, prevHash []byte) *Block {
+	block := &Block{[]byte{}, txs, prevHash, 0}
 	pow := NewProofOfWork(block)
 	nonce, hash := pow.Run()
 
@@ -26,9 +27,22 @@ func CreateBlock(data string, prevHash []byte) *Block {
 	return block
 }
 
-// Genesis needs to be the first block in a chain, as the first block doesn't have an address to point back to
-func Genesis() *Block {
-	return CreateBlock("Genesis", []byte{})
+// Genesis:チェーンの最初のブロック。最初のブロックにはポイントバックするアドレスがないから
+func Genesis(coinbase *Transaction) *Block {
+	return CreateBlock([]*Transaction{coinbase}, []byte{})
+}
+
+//ブロック内に存在するすべてのトランザクションを取得してハッシュする
+func (bloc *Block) HashTransactions() []byte {
+	var txHashes [][]byte
+	var txHash [32]byte
+
+	for _, tx := range bloc.Transactions {
+		txHashes = append(txHashes, tx.ID)
+	}
+	txHash = sha256.Sum256(bytes.Join(txHashes, []byte{}))
+
+	return txHash[:]
 }
 
 func (b *Block) Serialize() []byte {
